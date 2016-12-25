@@ -1,20 +1,21 @@
 %% used for SunM topochips cropping
 % created by Chan Way Dec 2016
-% Outcome: coarsely cropped images replaced by 16 bit finely cropped images
+% Outcome: coarsely cropped images replaced by finely cropped images
 
 clc; clear; close all
 
 %% variables to adjust
-imtype = 'png'; %'png', 'tif', etc;
+imtype = 'png'; % 'png', 'tif', etc;
+tolerance = 0.1; % ratio of image from borders to find edges
 
 %% loading file
 dirIn = uigetdir('','Choose the folder that contains all the coarsely cropped images');
 
 f = filesep; % file separator
 images = dir([dirIn f '*.' imtype]); % specs for original image
-
+tic % start timer
 %%
-for i = 1:length(images)
+parfor i = 1:length(images)
     fprintf('Processing image %i/%i...\n',i,length(images))
     I = imread([dirIn f images(i).name]);
     [m,n] = size(I);
@@ -24,14 +25,14 @@ for i = 1:length(images)
     lines = houghlines(Edge,theta,rho,P,'FillGap',40,'MinLength',20);
     figure, imshow(I), hold on
     
-    T = [0 0 n 0]; % top side end points
-    B = [0 m n m]; % bottom side end points
-    L = [0 0 0 m]; % left side end points
-    R = [n 0 n m]; % right side end points
-    lineT = [0 1 0]; % y=0
-    lineB = [0 1 -m]; % y=m
-    lineL = [1 0 0]; % x=0
-    lineR = [1 0 -n]; % x=n
+    T = [0 0 n 0]; % top side [x1 y1 x2 y2]
+    B = [0 m n m]; % bottom side [x1 y1 x2 y2]
+    L = [0 0 0 m]; % left side [x1 y1 x2 y2]
+    R = [n 0 n m]; % right side [x1 y1 x2 y2]
+    lineT = [0 1 0]; % y=0;ax+by+c=0;[a b c]
+    lineB = [0 1 -m]; % y=m;ax+by+c=0;[a b c]
+    lineL = [1 0 0]; % x=0;ax+by+c=0;[a b c]
+    lineR = [1 0 -n]; % x=n;ax+by+c=0;[a b c]
     for k = 1:length(lines)
         xy = [lines(k).point1; lines(k).point2];
         % plot(xy(:,1),xy(:,2),'LineWidth',2,'Color','green');
@@ -44,22 +45,22 @@ for i = 1:length(images)
         points = lineToBorderPoints(lineTemp,[m n]);
         
         % check for sides
-        if points(2)<m/2 && points(4)<m/2
+        if points(2)<m*tolerance && points(4)<m*tolerance
             if points(2)>T(2) || points(4)>T(4)
                 T = points;
                 lineT = lineTemp;
             end
-        elseif points(2)>m/2 && points(4)>m/2
+        elseif points(2)>m*(1-tolerance) && points(4)>m*(1-tolerance)
             if  points(2)<B(2) || points(4)<B(4)
                 B = points;
                 lineB = lineTemp;
             end
-        elseif points(1)<n/2 && points(3)<n/2
+        elseif points(1)<n*tolerance && points(3)<n*tolerance
             if  points(1)>L(1) || points(3)>L(3)
                 L = points;
                 lineL = lineTemp;
             end
-        elseif points(1)>n/2 && points(3)>n/2
+        elseif points(1)>n*(1-tolerance) && points(3)>n*(1-tolerance)
             if  points(1)<R(1) || points(3)<R(3)
                 R = points;
                 lineR = lineTemp;
@@ -80,10 +81,12 @@ for i = 1:length(images)
     % plot(BR(1),BR(2),'x','LineWidth',2,'Color','yellow')
     h = impoly(gca,[TL;TR;BR;BL]); % roi
     Mask = createMask(h);
-    Cropped = uint16(I).*uint16(Mask);
-    % figure;imshow(Cropped)
+    location = find(Mask==0);
+    I(location) = 0;
+    % figure;imshow(I)
     
-    imwrite(Cropped,[dirIn f images(i).name],imtype)
+    imwrite(I,[dirIn f images(i).name],imtype)
     close
 end
 fprintf('Fine Cropping Done!\n')
+toc % stop timer
