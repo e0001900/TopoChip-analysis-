@@ -6,7 +6,7 @@ clc; clear; close all
 
 %% variables to adjust
 imtype = 'png'; % 'png', 'tif', etc;
-tolerance = 0.1; % ratio of image from borders to find edges
+tolerance = 0.35; % ratio of image from borders to find edges
 
 %% loading file
 dirIn = uigetdir('','Choose the folder that contains all the coarsely cropped images');
