@@ -111,8 +111,12 @@ if manualCropCheck
     fprintf(['Manual cropping required for %i images...\n' ...
         'Draw ROI on the image displayed and double click on ROI\n'], ...
         manualCropCheck)
+    k = 0;
     for i = 1:length(manualCrop)
         if manualCrop(i)
+            k = k + 1;
+            fprintf('Manual Cropping %i/%i...\n',k,manualCropCheck)
+            
             I = imread([dirIn f images(i).name]);
             imshow(I)
             h = impoly; % interactive polygon drawing
