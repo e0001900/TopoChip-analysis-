@@ -10,6 +10,7 @@ rotH = 1; % angle between top edge and horizontal line in deg, range:(-45,45], r
 areaROI = 0.5; % expected ratio of the roi area to image area
 fromBorder = 0.4; % ratio of image from borders to find edges
 areaTol = 0.1; % area tolerance, ratio of the image area
+frate = 0.05; % accepatable failure rate for manual cropping
 
 %% Choose files
 dirIn = uigetdir('','Choose the folder that contains all the coarsely cropped images');
@@ -112,22 +113,29 @@ if manualCropCheck
     fprintf(['Manual cropping required for %i images...\n' ...
         'Draw ROI on the image displayed and double click on ROI\n'], ...
         manualCropCheck)
-    k = 0;
-    for i = 1:length(manualCrop)
-        if manualCrop(i)
-            k = k + 1;
-            fprintf('Manual Cropping %i/%i...\n',k,manualCropCheck)
-            
-            I = imread([dirIn f images(i).name]);
-            imshow(I)
-            h = impoly; % interactive polygon drawing
-            wait(h); % wait for double click on roi
-            Mask = createMask(h);
-            location = find(~Mask);
-            I(location) = 0;
-            imwrite(I,[dirIn f images(i).name],imtype)
-            close
+    if manualCropCheck/length(manualCrop) < frate
+        k = 0;
+        for i = 1:length(manualCrop)
+            if manualCrop(i)
+                k = k + 1;
+                fprintf('Manual Cropping %i/%i...\n',k,manualCropCheck)
+                
+                I = imread([dirIn f images(i).name]);
+                imshow(I)
+                h = impoly; % interactive polygon drawing
+                wait(h); % wait for double click on roi
+                Mask = createMask(h);
+                location = find(~Mask);
+                I(location) = 0;
+                imwrite(I,[dirIn f images(i).name],imtype)
+                close
+            end
+            fprintf('Fine Cropping Done!\n')
         end
+    else
+        fprintf(['Please adjust the parameters\n' ...
+            'OR call the engineer for technical support\n'])
     end
+else
+    fprintf('Fine Cropping Done!\n')
 end
-fprintf('Fine Cropping Done!\n')
