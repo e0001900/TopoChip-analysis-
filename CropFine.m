@@ -106,13 +106,23 @@ parfor i = 1:length(images)
     close
 end
 toc % stop timer
-if sum(manualCrop)==0
-    fprintf('Fine Cropping Done!\n')
-else
-    fprintf('Manual cropping required:\n')
-    for j = 1:length(manualCrop)
-        if manualCrop
-            fprintf('%s\n',images(j).name)
+manualCropCheck = sum(manualCrop);
+if manualCropCheck
+    fprintf(['Manual cropping required for %i images...\n' ...
+        'Draw ROI on the image displayed and double click on ROI\n'], ...
+        manualCropCheck)
+    for i = 1:length(manualCrop)
+        if manualCrop(i)
+            I = imread([dirIn f images(i).name]);
+            imshow(I)
+            h = impoly; % interactive polygon drawing
+            wait(h); % wait for double click on roi
+            Mask = createMask(h);
+            location = find(Mask==0);
+            I(location) = 0;
+            imwrite(I,[dirIn f images(i).name],imtype)
+            close
         end
     end
 end
+fprintf('Fine Cropping Done!\n')
