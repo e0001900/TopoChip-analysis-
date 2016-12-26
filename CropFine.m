@@ -134,7 +134,7 @@ if manualCropCheck
         end
     else
         fprintf(['Please adjust the parameters\n' ...
-            'OR call the engineer for technical support\n'])
+            'OR call +65 8670 5358 for technical support\n'])
     end
 else
     fprintf('Fine Cropping Done!\n')
