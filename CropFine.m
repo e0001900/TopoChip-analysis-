@@ -1,4 +1,4 @@
-%% used for SunM topochips cropping
+%% For SunM topochips cropping
 % created by Chan Way Dec 2016
 % Outcome: coarsely cropped images replaced by finely cropped images
 
@@ -6,14 +6,16 @@ clc; clear; close all
 
 %% Variables to adjust
 imtype = 'png'; % 'png', 'tif', etc;
-fromBorder = 0.4; % ratio of image from borders to find edges
 rotH = 1; % angle between top edge and horizontal line in deg, range:(-45,45]
+fromBorder = 0.4; % ratio of image from borders to find edges
+areaA = 0.4; % ratio of the roi to image size
 
 %% Choose files
 dirIn = uigetdir('','Choose the folder that contains all the coarsely cropped images');
 tic % start timer
 f = filesep; % file separator
 images = dir([dirIn f '*.' imtype]); % specs for original image
+manualCrop = zeros(length(images),1); % manual cropping check
 
 %% Morphological structuring elements
 rotV = atand(tand(rotH+90)); % perpendicular to rotH
@@ -94,11 +96,23 @@ parfor i = 1:length(images)
     
     %% Mask out roi and save the image
     Mask = createMask(h);
-    location = find(Mask==0);
-    I(location) = 0;
-    
-    imwrite(I,[dirIn f images(i).name],imtype)
+    if sum(sum(Mask))>m*n*areaA
+        location = find(Mask==0);
+        I(location) = 0;
+        imwrite(I,[dirIn f images(i).name],imtype)
+    else
+        manualCrop(i) = 1;
+    end
     close
 end
-fprintf('Fine Cropping Done!\n')
 toc % stop timer
+if sum(manualCrop)==0
+    fprintf('Fine Cropping Done!\n')
+else
+    fprintf('Manual cropping required:\n')
+    for j = 1:length(manualCrop)
+        if manualCrop
+            fprintf('%s\n',images(j).name)
+        end
+    end
+end
