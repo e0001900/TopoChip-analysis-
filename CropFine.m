@@ -6,9 +6,10 @@ clc; clear; close all
 
 %% Variables to adjust
 imtype = 'png'; % 'png', 'tif', etc;
-rotH = 1; % angle between top edge and horizontal line in deg, range:(-45,45]
+rotH = 1; % angle between top edge and horizontal line in deg, range:(-45,45], recomended:(-20 20]
+areaROI = 0.5; % expected ratio of the roi area to image area
 fromBorder = 0.4; % ratio of image from borders to find edges
-areaA = 0.4; % ratio of the roi to image size
+areaTol = 0.1; % area tolerance, ratio of the image area
 
 %% Choose files
 dirIn = uigetdir('','Choose the folder that contains all the coarsely cropped images');
@@ -19,7 +20,7 @@ manualCrop = zeros(length(images),1); % manual cropping check
 
 %% Morphological structuring elements
 rotV = atand(tand(rotH+90)); % perpendicular to rotH
-rotA = 2; % rotation allowance
+rotTol = 2; % rotation tolerance
 
 SE = strel('disk',1); % for dilation
 SEh = strel('line',20,rotH); % for horizontal lines
@@ -67,8 +68,8 @@ parfor i = 1:length(images)
         c = -a*xy(1,1) - b*xy(1,2);
         lineTemp = [a b c];
         
-        if abs(-lines(k).theta-rotV) < rotA || ... % lines.theta and rotV are on opposite angle coordinate (mirror)
-                abs(-lines(k).theta-atan2d(-tand(rotV),-1)) < rotA % check horizontal
+        if abs(-lines(k).theta-rotV) < rotTol || ... % lines.theta and rotV are on opposite angle coordinate (mirror)
+                abs(-lines(k).theta-atan2d(-tand(rotV),-1)) < rotTol % check horizontal
             if abs(lines(k).rho)<m*fromBorder && abs(lines(k).rho)>rhoT % check top edge
                 lineT = lineTemp;
                 rhoT = abs(lines(k).rho);
@@ -76,8 +77,8 @@ parfor i = 1:length(images)
                 lineB = lineTemp;
                 rhoB = abs(lines(k).rho);
             end
-        elseif abs(-lines(k).theta-rotH) < rotA || ... % lines.theta and rotH are on opposite angle coordinate (mirror)
-                abs(-lines(k).theta-atan2d(-tand(rotH),-1)) < rotA % check vertical
+        elseif abs(-lines(k).theta-rotH) < rotTol || ... % lines.theta and rotH are on opposite angle coordinate (mirror)
+                abs(-lines(k).theta-atan2d(-tand(rotH),-1)) < rotTol % check vertical
             if abs(lines(k).rho)<n*fromBorder && abs(lines(k).rho)>rhoL % check left edge
                 lineL = lineTemp;
                 rhoL = abs(lines(k).rho);
@@ -96,8 +97,8 @@ parfor i = 1:length(images)
     
     %% Mask out roi and save the image
     Mask = createMask(h);
-    if sum(sum(Mask))>m*n*areaA
-        location = find(Mask==0);
+    if abs(sum(sum(Mask))-m*n*areaROI) < m*n*areaTol
+        location = find(~Mask);
         I(location) = 0;
         imwrite(I,[dirIn f images(i).name],imtype)
     else
@@ -122,7 +123,7 @@ if manualCropCheck
             h = impoly; % interactive polygon drawing
             wait(h); % wait for double click on roi
             Mask = createMask(h);
-            location = find(Mask==0);
+            location = find(~Mask);
             I(location) = 0;
             imwrite(I,[dirIn f images(i).name],imtype)
             close
