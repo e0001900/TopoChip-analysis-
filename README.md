@@ -11,6 +11,7 @@ Images generated from EZ live fluorescence microscope are single images having o
 2. Run **_2_Renaming images.ijm_**
 
  1.Rename each image in each channel folder with the file name format tile {iii}.TIF following the original order of raw images prior to stitching.
+ 
  2.Multiple sets of chip images can be renamed by  adding to “new array” list. 
 
 Yet to be completed
