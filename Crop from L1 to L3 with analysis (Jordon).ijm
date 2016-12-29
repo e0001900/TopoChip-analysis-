@@ -137,3 +137,6 @@ for (i=0;i<66;i++)
 			print(Figname1);
 		}	
 	}
+
+rotH = atan(deltay1/deltax1)/PI*180;
+print("rotH to return for CropFine " + rotH);

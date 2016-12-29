@@ -7,8 +7,8 @@ clc; clear; close all
 %% Variables to adjust
 imtype = 'png'; % 'png', 'tif', etc;
 rotH = 1; % angle between top edge and horizontal line in deg, range:(-45,45], recomended:(-20 20]
-areaROI = 0.5; % expected ratio of the roi area to image area
-fromBorder = 0.4; % ratio of image from borders to find edges
+areaROI = 0.7; % expected ratio of the roi area to image area
+fromBorder = 0.3; % distance of image from borders to find edges divided by image length
 areaTol = 0.1; % area tolerance, ratio of the image area
 frate = 0.05; % accepatable failure rate for manual cropping
 
@@ -17,7 +17,11 @@ dirIn = uigetdir('','Choose the folder that contains all the coarsely cropped im
 tic % start timer
 f = filesep; % file separator
 images = dir([dirIn f '*.' imtype]); % specs for original image
-manualCrop = zeros(length(images),1); % manual cropping check
+
+dirOut = [dirIn f 'FineCropped'];
+mkdir(dirOut);
+
+manualCrop = zeros(length(images),1); % initialize manual cropping check
 
 %% Morphological structuring elements
 rotV = atand(tand(rotH+90)); % perpendicular to rotH
@@ -101,7 +105,7 @@ parfor i = 1:length(images)
     if abs(sum(sum(Mask))-m*n*areaROI) < m*n*areaTol
         location = find(~Mask);
         I(location) = 0;
-        imwrite(I,[dirIn f images(i).name],imtype)
+        imwrite(I,[dirOut f images(i).name],imtype)
     else
         manualCrop(i) = 1;
     end
@@ -127,7 +131,7 @@ if manualCropCheck
                 Mask = createMask(h);
                 location = find(~Mask);
                 I(location) = 0;
-                imwrite(I,[dirIn f images(i).name],imtype)
+                imwrite(I,[dirOut f images(i).name],imtype)
                 close
             end
             fprintf('Fine Cropping Done!\n')
