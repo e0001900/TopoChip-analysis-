@@ -134,11 +134,10 @@ toc % stop timer
 %% Manual cropping
 manualCropCheck = sum(manualCrop);
 if manualCropCheck
-    fprintf(['Manual cropping required for %i images...\n' ...
-        'Draw ROI on the image displayed and double click on ROI\n'], ...
-        manualCropCheck)
+    fprintf('\nManual cropping required for %i images...\n',manualCropCheck)
     if manualCropCheck/length(manualCrop) < frate
         k = 0;
+        fprintf('\nDraw ROI on the image displayed and double click on ROI\n')
         for i = 1:length(manualCrop)
             if manualCrop(i)
                 k = k + 1;
@@ -160,9 +159,9 @@ if manualCropCheck
             fprintf('Fine Cropping Done!\n')
         end
     else
-        fprintf(['Please adjust the parameters\n' ...
+        fprintf(['\nPlease adjust the parameters\n' ...
             'OR call +65 8670 5358 for technical support\n'])
     end
 else
-    fprintf('Fine Cropping Done!\n')
+    fprintf('\nFine Cropping Done!\n')
 end
