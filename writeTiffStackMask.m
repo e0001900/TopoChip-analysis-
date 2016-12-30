@@ -1,5 +1,4 @@
-function writeTiffStackMask(h,tr,tw,tags)
-Mask = createMask(h);
+function writeTiffStackMask(Mask,tr,tw,tags)
 location = ~Mask;
 setDirectory(tr,1)
 while true

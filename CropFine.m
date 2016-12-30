@@ -45,7 +45,6 @@ tags.Software = 'MATLAB';
 parfor i = 1:length(images)
     fprintf('Processing image %i/%i...\n',i,length(images))
     tr = Tiff([dirIn f images(i).name],'r');
-    tw = Tiff([dirOut f images(i).name],'w');
     setDirectory(tr,Ph)
     I = read(tr);
     
@@ -53,10 +52,10 @@ parfor i = 1:length(images)
     [m,n] = size(I);
     
     % initiate parameters
-    lineTi = [0 1 0]; % y=0; ax+by+c=0; [a b c]
-    lineBi = [0 1 -m]; % y=m; ax+by+c=0; [a b c]
-    lineLi = [1 0 0]; % x=0; ax+by+c=0; [a b c]
-    lineRi = [1 0 -n]; % x=n; ax+by+c=0; [a b c]
+    lineT = [0 1 0]; % y=0; ax+by+c=0; [a b c]
+    lineB = [0 1 -m]; % y=m; ax+by+c=0; [a b c]
+    lineL = [1 0 0]; % x=0; ax+by+c=0; [a b c]
+    lineR = [1 0 -n]; % x=n; ax+by+c=0; [a b c]
     rhoT = 0; % distance between origin and top edge
     rhoB = m; % distance between origin and bottom edge
     rhoL = 0; % distance between origin and left edge
@@ -107,7 +106,7 @@ parfor i = 1:length(images)
             elseif abs(lines(k).rho)>n*(1-fromBorder) && abs(lines(k).rho)<rhoR % check right edge
                 lineR = lineTemp;
                 rhoR = abs(lines(k).rho);
-                lineCheck(3) = 1;
+                lineCheck(4) = 1;
             end
         end
     end
@@ -121,15 +120,18 @@ parfor i = 1:length(images)
     %% Mask out roi and save the image
     Mask = createMask(h);
     if abs(sum(sum(Mask))-m*n*areaROI) < m*n*areaTol && all(lineCheck)
-        writeTiffStackMask(h,tr,tw,tags)
+        tw = Tiff([dirOut f images(i).name],'w');
+        writeTiffStackMask(Mask,tr,tw,tags)
+        close(tw)
     else
         manualCrop(i) = 1;
     end
     close(tr)
-    close(tw)
     close
 end
 toc % stop timer
+
+%% Manual cropping
 manualCropCheck = sum(manualCrop);
 if manualCropCheck
     fprintf(['Manual cropping required for %i images...\n' ...
@@ -143,13 +145,14 @@ if manualCropCheck
                 fprintf('Manual Cropping %i/%i...\n',k,manualCropCheck)
                 
                 tr = Tiff([dirIn f images(i).name],'r');
-                tw = Tiff([dirOut f images(i).name],'w');
                 setDirectory(tr,Ph)
                 I = read(tr);
                 imshow(I)
                 h = impoly; % interactive polygon drawing
                 wait(h); % wait for double click on roi
-                writeTiffStackMask(h,tr,tw,tags)
+                Mask = createMask(h);
+                tw = Tiff([dirOut f images(i).name],'w');
+                writeTiffStackMask(Mask,tr,tw,tags)
                 close(tr)
                 close(tw)
                 close
