@@ -13,11 +13,21 @@ Images generated from EZ live fluorescence microscope are single images having o
  1.Rename each image in each channel folder with the file name format tile {iii}.TIF following the original order of raw images prior to stitching.
  
  2.Multiple sets of chip images can be renamed by  adding to “new array” list. 
+ 
+3. Run **_3_Stitching.ijm_**
+ 1. Don't forget to adjust all the parameters prior to run the codes
+ 2. Stack images comprising of 5 channels will be generated
 
-Yet to be completed
-…
+4. Run **_4_BackgroundSub.ijm_**
+ 1. Make sure the ROI folder(for background subtraction)is under Fiji plugin folder.
+ 
+5. Run **_5_CropCoarse.ijm_**
+ 1. Note down the value printed out in log; useful for next-step fine cropping
 
-Run 3_Stitching.ijm
-Run 4_BackgroundSub.ijm
-Run 5_CropCoarse.ijm
-Run 6_CropFine.ijm
+5. Run **_5_CropFine.m_**
+ 1. Adjust parameters prior to run the matlab codes 
+ 
+ 
+ Yet to be completed
+
+
