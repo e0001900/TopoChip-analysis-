@@ -1,21 +1,22 @@
 %% For SunM topochips cropping
 % created by Chan Way Dec 2016
-% Outcome: coarsely cropped images replaced by finely cropped images
+% Outcome: finely cropped images will be stored in a folder
 
 clc; clear; close all
 
 %% Variables to adjust
-imtype = 'png'; % 'png', 'tif', etc;
 rotH = 1; % angle between top edge and horizontal line in deg, range:(-45,45], recomended:(-20 20]
 areaROI = 0.7; % expected ratio of the roi area to image area
 fromBorder = 0.3; % distance of image from borders to find edges divided by image length
 areaTol = 0.1; % area tolerance, ratio of the image area
 frate = 0.05; % accepatable failure rate for manual cropping
+Ph = 1; % channel number of phase contrast
 
 %% Choose files
 dirIn = uigetdir('','Choose the folder that contains all the coarsely cropped images');
 tic % start timer
 f = filesep; % file separator
+imtype = 'tif'; % only works with tif
 images = dir([dirIn f '*.' imtype]); % specs for original image
 
 dirOut = [dirIn f 'FineCropped'];
@@ -25,16 +26,28 @@ manualCrop = zeros(length(images),1); % initialize manual cropping check
 
 %% Morphological structuring elements
 rotV = atand(tand(rotH+90)); % perpendicular to rotH
-rotTol = 2; % rotation tolerance
+rotTol = 2.5; % rotation tolerance
 
 SE = strel('disk',1); % for dilation
 SEh = strel('line',20,rotH); % for horizontal lines
 SEv = strel('line',20,rotV); % for vertical lines
 
+%% Initializing tiff info
+info = imfinfo([dirIn f images(1).name]);
+tags.ImageLength = info(1).Height;
+tags.ImageWidth = info(1).Width;
+tags.Photometric = Tiff.Photometric.MinIsBlack;
+tags.BitsPerSample = info(1).BitDepth;
+tags.PlanarConfiguration = Tiff.PlanarConfiguration.Chunky;
+tags.Software = 'MATLAB';
+
 %% Loop using parfor for speed
 parfor i = 1:length(images)
     fprintf('Processing image %i/%i...\n',i,length(images))
-    I = imread([dirIn f images(i).name]);
+    tr = Tiff([dirIn f images(i).name],'r');
+    tw = Tiff([dirOut f images(i).name],'w');
+    setDirectory(tr,Ph)
+    I = read(tr);
     
     %% Process image
     [m,n] = size(I);
@@ -55,7 +68,7 @@ parfor i = 1:length(images)
     EdgeV = imopen(Edge,SEv); % find vertical edges
     Edge = EdgeH + EdgeV;
     Edge = imdilate(Edge,SE);
-    % figure, imshow(Edge)
+    figure, imshow(Edge)
     
     % hough transform to find lines
     [H,theta,rho] = hough(Edge);
@@ -65,7 +78,7 @@ parfor i = 1:length(images)
     
     for k = 1:length(lines)
         xy = [lines(k).point1; lines(k).point2];
-        % plot(xy(:,1),xy(:,2),'LineWidth',2,'Color','green');
+        plot(xy(:,1),xy(:,2),'LineWidth',2,'Color','green');
         
         % line in the form of ax+by+c=0
         a = xy(1,2) - xy(2,2);
@@ -103,12 +116,12 @@ parfor i = 1:length(images)
     %% Mask out roi and save the image
     Mask = createMask(h);
     if abs(sum(sum(Mask))-m*n*areaROI) < m*n*areaTol
-        location = find(~Mask);
-        I(location) = 0;
-        imwrite(I,[dirOut f images(i).name],imtype)
+        writeTiffStackMask(h,tr,tw,tags)
     else
         manualCrop(i) = 1;
     end
+    close(tr)
+    close(tw)
     close
 end
 toc % stop timer
@@ -124,14 +137,16 @@ if manualCropCheck
                 k = k + 1;
                 fprintf('Manual Cropping %i/%i...\n',k,manualCropCheck)
                 
-                I = imread([dirIn f images(i).name]);
+                tr = Tiff([dirIn f images(i).name],'r');
+                tw = Tiff([dirOut f images(i).name],'w');
+                setDirectory(tr,Ph)
+                I = read(tr);
                 imshow(I)
                 h = impoly; % interactive polygon drawing
                 wait(h); % wait for double click on roi
-                Mask = createMask(h);
-                location = find(~Mask);
-                I(location) = 0;
-                imwrite(I,[dirOut f images(i).name],imtype)
+                writeTiffStackMask(h,tr,tw,tags)
+                close(tr)
+                close(tw)
                 close
             end
             fprintf('Fine Cropping Done!\n')
