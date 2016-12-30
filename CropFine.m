@@ -1,92 +1,165 @@
-%% used for SunM topochips cropping
+%% For SunM topochips cropping
 % created by Chan Way Dec 2016
-% Outcome: coarsely cropped images replaced by finely cropped images
+% Outcome: finely cropped images will be stored in a folder
 
 clc; clear; close all
 
-%% variables to adjust
-imtype = 'png'; % 'png', 'tif', etc;
-tolerance = 0.35; % ratio of image from borders to find edges
+%% Variables to adjust
+rotH = -1; % angle between top edge and horizontal line in deg, range:(-45,45], recomended:(-20 20]
+areaROI = 0.5; % expected ratio of the roi area to image area
+fromBorder = 0.3; % distance of image from borders to find edges divided by image length
+areaTol = 0.1; % area tolerance, ratio of the image area
+frate = 0.05; % accepatable failure rate for manual cropping
+Ph = 1; % channel number of phase contrast
 
-%% loading file
+%% Choose files
 dirIn = uigetdir('','Choose the folder that contains all the coarsely cropped images');
-
-f = filesep; % file separator
-images = dir([dirIn f '*.' imtype]); % specs for original image
 tic % start timer
-%%
+f = filesep; % file separator
+imtype = 'tif'; % only works with tif
+images = dir([dirIn f '*.' imtype]); % specs for original image
+
+dirOut = [dirIn f 'FineCropped'];
+mkdir(dirOut);
+
+manualCrop = zeros(length(images),1); % initialize manual cropping check
+
+%% Morphological structuring elements
+rotV = atand(tand(rotH+90)); % perpendicular to rotH
+rotTol = 2.5; % rotation tolerance
+
+SE = strel('disk',1); % for dilation
+SEh = strel('line',20,rotH); % for horizontal lines
+SEv = strel('line',20,rotV); % for vertical lines
+
+%% Initializing tiff info
+info = imfinfo([dirIn f images(1).name]);
+tags.ImageLength = info(1).Height;
+tags.ImageWidth = info(1).Width;
+tags.Photometric = Tiff.Photometric.MinIsBlack;
+tags.BitsPerSample = info(1).BitDepth;
+tags.PlanarConfiguration = Tiff.PlanarConfiguration.Chunky;
+tags.Software = 'MATLAB';
+
+%% Loop using parfor for speed
 parfor i = 1:length(images)
     fprintf('Processing image %i/%i...\n',i,length(images))
-    I = imread([dirIn f images(i).name]);
+    tr = Tiff([dirIn f images(i).name],'r');
+    tw = Tiff([dirOut f images(i).name],'w');
+    setDirectory(tr,Ph)
+    I = read(tr);
+    
+    %% Process image
     [m,n] = size(I);
-    Edge = edge(I,'canny'); % find edges
-    [H,theta,rho] = hough(Edge); % hough transform to find lines
-    P = houghpeaks(H,50);
-    lines = houghlines(Edge,theta,rho,P,'FillGap',40,'MinLength',20);
+    
+    % initiate parameters
+    lineTi = [0 1 0]; % y=0; ax+by+c=0; [a b c]
+    lineBi = [0 1 -m]; % y=m; ax+by+c=0; [a b c]
+    lineLi = [1 0 0]; % x=0; ax+by+c=0; [a b c]
+    lineRi = [1 0 -n]; % x=n; ax+by+c=0; [a b c]
+    rhoT = 0; % distance between origin and top edge
+    rhoB = m; % distance between origin and bottom edge
+    rhoL = 0; % distance between origin and left edge
+    rhoR = n; % distance between origin and right edge
+    lineCheck = zeros(1,4); % check if the edge is the border of the image
+    
+    % find edges
+    Edge = edge(I,'canny');
+    EdgeH = imopen(Edge,SEh); % find horizontal edges
+    EdgeV = imopen(Edge,SEv); % find vertical edges
+    Edge = EdgeH + EdgeV;
+    Edge = imdilate(Edge,SE);
+    figure, imshow(Edge)
+    
+    % hough transform to find lines
+    [H,theta,rho] = hough(Edge);
+    P = houghpeaks(H,20);
+    lines = houghlines(Edge,theta,rho,P,'FillGap',40,'MinLength',10);
     figure, imshow(I), hold on
     
-    T = [0 0 n 0]; % top side [x1 y1 x2 y2]
-    B = [0 m n m]; % bottom side [x1 y1 x2 y2]
-    L = [0 0 0 m]; % left side [x1 y1 x2 y2]
-    R = [n 0 n m]; % right side [x1 y1 x2 y2]
-    lineT = [0 1 0]; % y=0;ax+by+c=0;[a b c]
-    lineB = [0 1 -m]; % y=m;ax+by+c=0;[a b c]
-    lineL = [1 0 0]; % x=0;ax+by+c=0;[a b c]
-    lineR = [1 0 -n]; % x=n;ax+by+c=0;[a b c]
     for k = 1:length(lines)
         xy = [lines(k).point1; lines(k).point2];
-        % plot(xy(:,1),xy(:,2),'LineWidth',2,'Color','green');
+        plot(xy(:,1),xy(:,2),'LineWidth',2,'Color','green');
         
-        % line in the form of ax+by+c=0 and expand the line to image borders
-        a = xy(1,2)-xy(2,2);
-        b = xy(2,1)-xy(1,1);
-        c = -a*xy(1,1)-b*xy(1,2);
+        % line in the form of ax+by+c=0
+        a = xy(1,2) - xy(2,2);
+        b = xy(2,1) - xy(1,1);
+        c = -a*xy(1,1) - b*xy(1,2);
         lineTemp = [a b c];
-        points = lineToBorderPoints(lineTemp,[m n]);
         
-        % check for sides
-        if points(2)<m*tolerance && points(4)<m*tolerance
-            if points(2)>T(2) || points(4)>T(4)
-                T = points;
+        if abs(-lines(k).theta-rotV) < rotTol || ... % lines.theta and rotV are on opposite angle coordinate (mirror)
+                abs(-lines(k).theta-atan2d(-tand(rotV),-1)) < rotTol % check horizontal
+            if abs(lines(k).rho)<m*fromBorder && abs(lines(k).rho)>rhoT % check top edge
                 lineT = lineTemp;
-            end
-        elseif points(2)>m*(1-tolerance) && points(4)>m*(1-tolerance)
-            if  points(2)<B(2) || points(4)<B(4)
-                B = points;
+                rhoT = abs(lines(k).rho);
+                lineCheck(1) = 1;
+            elseif abs(lines(k).rho)>n*(1-fromBorder) && abs(lines(k).rho)<rhoB % check bottom edge
                 lineB = lineTemp;
+                rhoB = abs(lines(k).rho);
+                lineCheck(2) = 1;
             end
-        elseif points(1)<n*tolerance && points(3)<n*tolerance
-            if  points(1)>L(1) || points(3)>L(3)
-                L = points;
+        elseif abs(-lines(k).theta-rotH) < rotTol || ... % lines.theta and rotH are on opposite angle coordinate (mirror)
+                abs(-lines(k).theta-atan2d(-tand(rotH),-1)) < rotTol % check vertical
+            if abs(lines(k).rho)<n*fromBorder && abs(lines(k).rho)>rhoL % check left edge
                 lineL = lineTemp;
-            end
-        elseif points(1)>n*(1-tolerance) && points(3)>n*(1-tolerance)
-            if  points(1)<R(1) || points(3)<R(3)
-                R = points;
+                rhoL = abs(lines(k).rho);
+                lineCheck(3) = 1;
+            elseif abs(lines(k).rho)>n*(1-fromBorder) && abs(lines(k).rho)<rhoR % check right edge
                 lineR = lineTemp;
+                rhoR = abs(lines(k).rho);
+                lineCheck(3) = 1;
             end
         end
     end
+    % Solve [a b]*[x;y]=c for line interceptions
     TL = ([lineT(1:2);lineL(1:2)]\-[lineT(3);lineL(3)])'; % top left corner
     TR = ([lineT(1:2);lineR(1:2)]\-[lineT(3);lineR(3)])'; % top right corner
     BL = ([lineB(1:2);lineL(1:2)]\-[lineB(3);lineL(3)])'; % bottom left corner
     BR = ([lineB(1:2);lineR(1:2)]\-[lineB(3);lineR(3)])'; % bottom right corner
-    % plot(T([1,3]),T([2,4]),'LineWidth',2,'Color','red')
-    % plot(B([1,3]),B([2,4]),'LineWidth',2,'Color','red')
-    % plot(L([1,3]),L([2,4]),'LineWidth',2,'Color','red')
-    % plot(R([1,3]),R([2,4]),'LineWidth',2,'Color','red')
-    % plot(TL(1),TL(2),'x','LineWidth',2,'Color','yellow')
-    % plot(TR(1),TR(2),'x','LineWidth',2,'Color','yellow')
-    % plot(BL(1),BL(2),'x','LineWidth',2,'Color','yellow')
-    % plot(BR(1),BR(2),'x','LineWidth',2,'Color','yellow')
     h = impoly(gca,[TL;TR;BR;BL]); % roi
-    Mask = createMask(h);
-    location = find(Mask==0);
-    I(location) = 0;
-    % figure;imshow(I)
     
-    imwrite(I,[dirIn f images(i).name],imtype)
+    %% Mask out roi and save the image
+    Mask = createMask(h);
+    if abs(sum(sum(Mask))-m*n*areaROI) < m*n*areaTol && all(lineCheck)
+        writeTiffStackMask(h,tr,tw,tags)
+    else
+        manualCrop(i) = 1;
+    end
+    close(tr)
+    close(tw)
     close
 end
-fprintf('Fine Cropping Done!\n')
 toc % stop timer
+manualCropCheck = sum(manualCrop);
+if manualCropCheck
+    fprintf(['Manual cropping required for %i images...\n' ...
+        'Draw ROI on the image displayed and double click on ROI\n'], ...
+        manualCropCheck)
+    if manualCropCheck/length(manualCrop) < frate
+        k = 0;
+        for i = 1:length(manualCrop)
+            if manualCrop(i)
+                k = k + 1;
+                fprintf('Manual Cropping %i/%i...\n',k,manualCropCheck)
+                
+                tr = Tiff([dirIn f images(i).name],'r');
+                tw = Tiff([dirOut f images(i).name],'w');
+                setDirectory(tr,Ph)
+                I = read(tr);
+                imshow(I)
+                h = impoly; % interactive polygon drawing
+                wait(h); % wait for double click on roi
+                writeTiffStackMask(h,tr,tw,tags)
+                close(tr)
+                close(tw)
+                close
+            end
+            fprintf('Fine Cropping Done!\n')
+        end
+    else
+        fprintf(['Please adjust the parameters\n' ...
+            'OR call +65 8670 5358 for technical support\n'])
+    end
+else
+    fprintf('Fine Cropping Done!\n')
+end
