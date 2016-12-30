@@ -5,8 +5,8 @@
 clc; clear; close all
 
 %% Variables to adjust
-rotH = 1; % angle between top edge and horizontal line in deg, range:(-45,45], recomended:(-20 20]
-areaROI = 0.7; % expected ratio of the roi area to image area
+rotH = -1; % angle between top edge and horizontal line in deg, range:(-45,45], recomended:(-20 20]
+areaROI = 0.5; % expected ratio of the roi area to image area
 fromBorder = 0.3; % distance of image from borders to find edges divided by image length
 areaTol = 0.1; % area tolerance, ratio of the image area
 frate = 0.05; % accepatable failure rate for manual cropping
@@ -53,14 +53,15 @@ parfor i = 1:length(images)
     [m,n] = size(I);
     
     % initiate parameters
-    lineT = [0 1 0]; % y=0; ax+by+c=0; [a b c]
-    lineB = [0 1 -m]; % y=m; ax+by+c=0; [a b c]
-    lineL = [1 0 0]; % x=0; ax+by+c=0; [a b c]
-    lineR = [1 0 -n]; % x=n; ax+by+c=0; [a b c]
+    lineTi = [0 1 0]; % y=0; ax+by+c=0; [a b c]
+    lineBi = [0 1 -m]; % y=m; ax+by+c=0; [a b c]
+    lineLi = [1 0 0]; % x=0; ax+by+c=0; [a b c]
+    lineRi = [1 0 -n]; % x=n; ax+by+c=0; [a b c]
     rhoT = 0; % distance between origin and top edge
     rhoB = m; % distance between origin and bottom edge
     rhoL = 0; % distance between origin and left edge
     rhoR = n; % distance between origin and right edge
+    lineCheck = zeros(1,4); % check if the edge is the border of the image
     
     % find edges
     Edge = edge(I,'canny');
@@ -91,18 +92,22 @@ parfor i = 1:length(images)
             if abs(lines(k).rho)<m*fromBorder && abs(lines(k).rho)>rhoT % check top edge
                 lineT = lineTemp;
                 rhoT = abs(lines(k).rho);
+                lineCheck(1) = 1;
             elseif abs(lines(k).rho)>n*(1-fromBorder) && abs(lines(k).rho)<rhoB % check bottom edge
                 lineB = lineTemp;
                 rhoB = abs(lines(k).rho);
+                lineCheck(2) = 1;
             end
         elseif abs(-lines(k).theta-rotH) < rotTol || ... % lines.theta and rotH are on opposite angle coordinate (mirror)
                 abs(-lines(k).theta-atan2d(-tand(rotH),-1)) < rotTol % check vertical
             if abs(lines(k).rho)<n*fromBorder && abs(lines(k).rho)>rhoL % check left edge
                 lineL = lineTemp;
                 rhoL = abs(lines(k).rho);
+                lineCheck(3) = 1;
             elseif abs(lines(k).rho)>n*(1-fromBorder) && abs(lines(k).rho)<rhoR % check right edge
                 lineR = lineTemp;
                 rhoR = abs(lines(k).rho);
+                lineCheck(3) = 1;
             end
         end
     end
@@ -115,7 +120,7 @@ parfor i = 1:length(images)
     
     %% Mask out roi and save the image
     Mask = createMask(h);
-    if abs(sum(sum(Mask))-m*n*areaROI) < m*n*areaTol
+    if abs(sum(sum(Mask))-m*n*areaROI) < m*n*areaTol && all(lineCheck)
         writeTiffStackMask(h,tr,tw,tags)
     else
         manualCrop(i) = 1;
