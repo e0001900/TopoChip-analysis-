@@ -68,7 +68,7 @@ parfor i = 1:length(images)
     EdgeV = imopen(Edge,SEv); % find vertical edges
     Edge = EdgeH + EdgeV;
     Edge = imdilate(Edge,SE);
-    figure, imshow(Edge)
+    % figure, imshow(Edge)
     
     % hough transform to find lines
     [H,theta,rho] = hough(Edge);
@@ -78,7 +78,7 @@ parfor i = 1:length(images)
     
     for k = 1:length(lines)
         xy = [lines(k).point1; lines(k).point2];
-        plot(xy(:,1),xy(:,2),'LineWidth',2,'Color','green');
+        % plot(xy(:,1),xy(:,2),'LineWidth',2,'Color','green');
         
         % line in the form of ax+by+c=0
         a = xy(1,2) - xy(2,2);
