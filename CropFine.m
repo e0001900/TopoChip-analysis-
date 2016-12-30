@@ -9,7 +9,7 @@ rotH = -1; % angle between top edge and horizontal line in deg, range:(-45,45], 
 areaROI = 0.5; % expected ratio of the roi area to image area
 fromBorder = 0.3; % distance of image from borders to find edges divided by image length
 areaTol = 0.1; % area tolerance, ratio of the image area
-frate = 0.05; % accepatable failure rate for manual cropping
+frate = 0.07; % accepatable failure rate for manual cropping
 Ph = 1; % channel number of phase contrast
 
 %% Choose files
