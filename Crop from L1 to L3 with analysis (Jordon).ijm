@@ -2,19 +2,18 @@
 //Modified by Yang
 //Date 05 May 2016
 //Used for SunM 66*66 chips
-//Will have to run the code 4 times to complete the full analysis, each
-//test will generate a folder containing the cropped images
-
+//Need to manually rotate the images to make the blank to the upper right corner!!!!!!!!!!!!!
 //Define the initial area at the left upper corner
-x1=4765;//upper left
-y1=1440;//upper left
-x2=34470;//upper right
-y2=1440;//upper right
-x3=4765;//lower left
-y3=31145;//lower left
-Length=600; //length of the cropping square (length=600 at least)
-imtype="png"; //png, tif, etc
-//setBatchMode(true); //Comment out this line if speed is not needed (20x faster without displaying images)
+x1=4515;//upper left
+y1=1494;//upper left
+x2=34267;//upper right
+y2=1176;//upper right
+x3=4780;//lower left
+y3=31205;//lower left
+Length=652; //length of the cropping square (length=600 at least)
+Width=664;//width, can bedifferent as length
+imtype="tif"; //png, tif, etc
+setBatchMode(true); //Comment out this line if speed is not needed (20x faster without displaying images)
 dir = getDirectory("Choose a folder for the output folder");
 output = dir + "Cropped" + File.separator;
 File.makeDirectory(output);
@@ -29,10 +28,10 @@ File.makeDirectory(output);
 //Defind the horizontal and vertical distance between adjacent well
 //delta1 is horizontal distance
 //delta2 is vertical distance
-deltax1=(x2-x1)/65; //upper right - upper left
-deltax2=(x3-x1)/65;   //lower left - upper left
-deltay1=(y2-y1)/65; //upper right - upper left
-deltay2=(y3-y1)/65; //lower left - upper left
+deltax1=round((x2-x1)/65); //upper right - upper left
+deltax2=round((x3-x1)/65);   //lower left - upper left
+deltay1=round((y2-y1)/65); //upper right - upper left
+deltay2=round((y3-y1)/65); //lower left - upper left
 
 //Num1 is used to be converted into alphabet
 //Num2 is used as counter
@@ -57,14 +56,9 @@ for (i=0;i<66;i++)
 		for (j=0;j<66;j++)
 		{
             //define the image
-			selectWindow("1."+imtype);
+			selectWindow("Stack."+imtype);
             //define the length by visualization
-			makeRectangle(m, n, Length, Length);
-            //makeRectangle(x, y, width, height)
-            //Creates a rectangular selection. The x and y arguments are
-            //the coordinates (in pixels) of the upper left corner of the
-            //selection. The origin (0,0) of the coordinate system is the
-            //upper left corner of the image.
+			makeOval(m, n, Length, Width);
 			roiManager("Add");
             //Define number as 01 02 03...10 11 12...
 			if (Num2<10)
@@ -76,15 +70,15 @@ for (i=0;i<66;i++)
 				Figname1=toString(Num2)+c;	
 			}
 			//Figname1="c1";
-			//run("Duplicate...",  "title="+Figname1+".imtype duplicate channels=1-5 slices=1-16");
-			run("Duplicate...","title="+Figname1+"."+imtype);
+			run("Duplicate...", "duplicate");
+			//run("Duplicate...","title="+Figname1+"."+imtype);
             //define the saving path
             
             //run("Save", saveAs=in_folder+"/"+Figname1+".png");
 			in_folder=output+"\\";
 			mydir=in_folder+Figname1;
 			//File.makeDirectory(mydir);
-			selectWindow(Figname1+"."+imtype);
+			//selectWindow(Figname1+"."+imtype);
 			saveAs(imtype, in_folder+Figname1);
 			close();
 
@@ -139,4 +133,4 @@ for (i=0;i<66;i++)
 	}
 
 rotH = atan(deltay1/deltax1)/PI*180;
-print("rotH to return for CropFine " + rotH);
+print("rotH to return for CropFine " + round(rotH));
