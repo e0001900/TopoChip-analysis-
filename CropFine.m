@@ -9,7 +9,6 @@ rotH = -1; % angle between top edge and horizontal line in deg, range:(-45,45], 
 areaROI = 0.5; % expected ratio of the roi area to image area
 fromBorder = 0.3; % distance of image from borders to find edges divided by image length
 areaTol = 0.1; % area tolerance, ratio of the image area
-frate = 0.07; % accepatable failure rate for manual cropping
 Ph = 1; % channel number of phase contrast
 
 %% Choose files
@@ -92,7 +91,8 @@ parfor i = 1:length(images)
                 lineT = lineTemp;
                 rhoT = abs(lines(k).rho);
                 lineCheck(1) = 1;
-            elseif abs(lines(k).rho)>n*(1-fromBorder) && abs(lines(k).rho)<rhoB % check bottom edge
+            elseif abs(lines(k).rho)>n*(1-fromBorder) && ...
+                    abs(lines(k).rho)<rhoB % check bottom edge
                 lineB = lineTemp;
                 rhoB = abs(lines(k).rho);
                 lineCheck(2) = 1;
@@ -103,7 +103,8 @@ parfor i = 1:length(images)
                 lineL = lineTemp;
                 rhoL = abs(lines(k).rho);
                 lineCheck(3) = 1;
-            elseif abs(lines(k).rho)>n*(1-fromBorder) && abs(lines(k).rho)<rhoR % check right edge
+            elseif abs(lines(k).rho)>n*(1-fromBorder) && ...
+                    abs(lines(k).rho)<rhoR % check right edge
                 lineR = lineTemp;
                 rhoR = abs(lines(k).rho);
                 lineCheck(4) = 1;
@@ -134,33 +135,40 @@ toc % stop timer
 %% Manual cropping
 manualCropCheck = sum(manualCrop);
 if manualCropCheck
-    fprintf('\nManual cropping required for %i images...\n',manualCropCheck)
-    if manualCropCheck/length(manualCrop) < frate
-        k = 0;
-        fprintf('\nDraw ROI on the image displayed and double click on ROI\n')
-        for i = 1:length(manualCrop)
-            if manualCrop(i)
-                k = k + 1;
-                fprintf('Manual Cropping %i/%i...\n',k,manualCropCheck)
-                
-                tr = Tiff([dirIn f images(i).name],'r');
-                setDirectory(tr,Ph)
-                I = read(tr);
-                imshow(I)
-                h = impoly; % interactive polygon drawing
-                wait(h); % wait for double click on roi
-                Mask = createMask(h);
-                tw = Tiff([dirOut f images(i).name],'w');
-                writeTiffStackMask(Mask,tr,tw,tags)
-                close(tr)
-                close(tw)
-                close
+    ques = sprintf(['Would you like to proceed with manual cropping ' ...
+        'for %i image(s)?'],manualCropCheck);
+    choice = questdlg(ques,'Manual Cropping Required','Yes','No','Yes');
+    switch choice
+        case 'Yes'
+            k = 0;
+            fprintf(['\nDraw ROI on the image displayed '...
+                'and double click on ROI\n'])
+            for i = 1:length(manualCrop)
+                if manualCrop(i)
+                    k = k + 1;
+                    fprintf('Manual Cropping %i/%i...\n',k,manualCropCheck)
+                    
+                    tr = Tiff([dirIn f images(i).name],'r');
+                    setDirectory(tr,Ph)
+                    I = read(tr);
+                    imshow(I)
+                    h = impoly; % interactive polygon drawing
+                    wait(h); % wait for double click on roi
+                    Mask = createMask(h);
+                    tw = Tiff([dirOut f images(i).name],'w');
+                    writeTiffStackMask(Mask,tr,tw,tags)
+                    close(tr)
+                    close(tw)
+                    close
+                end
+                fprintf('Fine Cropping Done!\n')
             end
-            fprintf('Fine Cropping Done!\n')
-        end
-    else
-        fprintf(['\nPlease adjust the parameters\n' ...
-            'OR call +65 8670 5358 for technical support\n'])
+        case 'No'
+            fprintf(['\nPlease adjust the parameters\n' ...
+                'OR call +65 8670 5358 for technical support\n'])
+            manualCropIm = {images(manualCrop).name}';
+            save([dirIn f 'ManualCrop'],'dirIn','dirOut','manualCropIm',...
+                '-v4')
     end
 else
     fprintf('\nFine Cropping Done!\n')
