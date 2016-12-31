@@ -164,9 +164,11 @@ if manualCropCheck
                 fprintf('Fine Cropping Done!\n')
             end
         case 'No'
-            fprintf(['\nPlease adjust the parameters\n' ...
-                'OR call +65 8670 5358 for technical support\n'])
             manualCropIm = {images(manualCrop).name}';
+            fprintf('Manual cropping required:\n')
+            disp(manualCropIm)
+            fprintf(['Please adjust the parameters\n' ...
+                'OR call +65 8670 5358 for technical support\n'])
             save([dirIn f 'ManualCrop'],'dirIn','dirOut','manualCropIm',...
                 '-v4')
     end
