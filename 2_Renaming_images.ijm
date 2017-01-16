@@ -5,9 +5,9 @@
 // use '\\' instead of '\'
 //dirNameMain = "D:\\users\\Jordon\\Topo Chip EZ live";
 dirNameMain = getDirectory("Choose a Directory that has five folders,each repersenting one channel"); //open a dialogue to choose directory
-folder_list = newArray("28-11-2016 (Batch 11) 200K");
+folder_list = newArray("Batch 16 Day 2 (Final) [11-1-2017]");
 // Do change the name here also, can do multiple batches of images at the same time; if they are same naming format
-Ch_list = newArray("w01\\","w02\\","w03\\","w04\\","w05\\");
+Ch_list = newArray("w01\\","w02\\","w03\\","w04\\");
 imtypeIn = "TIF";
 //imtypeOut = "PNG";
 

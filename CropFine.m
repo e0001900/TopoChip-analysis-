@@ -5,7 +5,7 @@
 clc; clear; close all
 
 %% Variables to adjust
-rotH = -5; % angle between top edge and horizontal line in deg, range:(-45,45], recomended:(-20 20]
+rotH = 0; % angle between top edge and horizontal line in deg, range:(-45,45], recomended:(-20 20]
 areaROI = 0.5; % expected ratio of the roi area to image area
 fromBorder = 0.3; % distance of image from borders to find edges divided by image length
 areaTol = 0.1; % area tolerance, ratio of the image area
@@ -73,7 +73,7 @@ while ~all(Cropped) && thres>0
         EdgeV = imopen(Edge,SEv); % find vertical edges
         Edge = EdgeH + EdgeV;
         Edge = imdilate(Edge,SE);
-        figure, imshow(Edge) % uncomment for debugging
+        %figure, imshow(Edge) % uncomment for debugging
         
         % hough transform to find lines
         [H,theta,rho] = hough(Edge);
@@ -83,7 +83,7 @@ while ~all(Cropped) && thres>0
         
         for k = 1:length(lines)
             xy = [lines(k).point1; lines(k).point2];
-            plot(xy(:,1),xy(:,2),'LineWidth',2,'Color','green'); % uncomment for debugging
+            %plot(xy(:,1),xy(:,2),'LineWidth',2,'Color','green'); % uncomment for debugging
             
             % line in the form of ax+by+c=0
             a = xy(1,2) - xy(2,2);

@@ -31,6 +31,7 @@ firstToProcess = 0;
 ref = ""; // dir of TileConfiguration.registered.txt
 folder_name = substring(folder_list[firstToProcess], 0, lengthOf(folder_list[firstToProcess])-1);
 input_dirName = input_dirMain + folder_name + sep;
+print(input_dirName);
 output_file = output_dir + folder_name + "." + imtype;
 
 if (EmptyFirstRow) {

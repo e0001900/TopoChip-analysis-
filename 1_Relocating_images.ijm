@@ -7,7 +7,7 @@
 //Variables to change
 x = 17; //number of images along x
 y = 17; //number of images along y
-n = 5; //here n serve as number of different channels 
+n = 4; //here n serve as number of different channels 
 offset = 0; //0:no empty first row needed; 1:for creating empty first row
 RowOrCol = 0; //0:images are in row-by-row; 1:images are in col-by-col ???Not sure how to do it 
 imtype = "tif"; //tif, png, etc
