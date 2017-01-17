@@ -6,7 +6,7 @@
 % step 2 generating heatmap and averaging
 
 clc; clear all; close all
-cd('Y:\Dropbox\Hanry Projects\SunM-TopoChip codes generating\Code for SM\Topochips analysis\result');
+cd('D:\Jordon\FineCropped\split channels\analysis');
 %% loading data
 data=xlsread('resultforTopochips.xlsx');
 
