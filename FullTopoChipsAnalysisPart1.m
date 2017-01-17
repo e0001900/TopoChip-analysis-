@@ -7,9 +7,9 @@
 clc; clear all; close all
 
 %% loading image
-dir1 = uigetdir('','Choose the folder directory for channel 2 dapi');% directory for channel 2 dapi
-dir2 = uigetdir('','Choose the folder directory for channel 3 alb'); % directory for channel 3 alb
-dir3 = uigetdir('','Choose the folder directory for channel 5 ck19'); % directory for channel 5 ck19
+sdirectory1 = uigetdir('','Choose the folder directory for channel 2 dapi');% directory for channel 2 dapi
+sdirectory2 = uigetdir('','Choose the folder directory for channel 3 alb'); % directory for channel 3 alb
+sdirectory3 = uigetdir('','Choose the folder directory for channel 5 ck19'); % directory for channel 5 ck19
 source1 = uigetdir('','Choose the folder directory for processed dapi saving directory'); % processed dapi saving directory
 source2 = uigetdir('','Choose the folder directory for processed alb saving directory'); % processed alb saving directory
 source3 = uigetdir('','Choose the folder directory for processed ck19 saving directory'); % processed ck19 saving directory
@@ -25,15 +25,15 @@ lenTiff3 = length(tiffiles3);
 
 
 % The blank is teh value pre-calculated!!!
-cd('Y:\Dropbox\Hanry Projects\SunM-TopoChip codes generating\Code for SM\Topochips analysis\Blank');
-sig2blank = imread('3334-0003.tif');
-sig3blank = imread('3334-0005.tif');
+cd('D:\Jordon\FineCropped\split channels\blank');
+sig2blank = imread('0166-0003.tif');
+sig3blank = imread('0166-0004.tif');
 tmp11=sum(sum(sig2blank));
 tmp22=sum(sum(sig3blank));
 blank=tmp11/tmp22;
 
 %saving directory
-cd('Y:\Dropbox\Hanry Projects\SunM-TopoChip codes generating\Code for SM\Topochips analysis\result')
+cd('D:\Jordon\FineCropped\split channels\analysis');
 
 % initializing variables
 	numpre=zeros(length(tiffiles1),1);
