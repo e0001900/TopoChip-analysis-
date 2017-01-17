@@ -7,13 +7,12 @@
 clc; clear all; close all
 
 %% loading image
-
-sdirectory1 = 'Y:\Dropbox\Hanry Projects\SunM-TopoChip codes generating\Code for SM\Topochips analysis\Channel 2'; % directory for channel 2 dapi
-sdirectory2 = 'Y:\Dropbox\Hanry Projects\SunM-TopoChip codes generating\Code for SM\Topochips analysis\Channel 3'; % directory for channel 3 alb
-sdirectory3 = 'Y:\Dropbox\Hanry Projects\SunM-TopoChip codes generating\Code for SM\Topochips analysis\Channel 5'; % directory for channel 5 ck19
-source1 = 'Y:\Dropbox\Hanry Projects\SunM-TopoChip codes generating\Code for SM\Topochips analysis\result\processed channel 2\'; % processed dapi saving directory
-source2 = 'Y:\Dropbox\Hanry Projects\SunM-TopoChip codes generating\Code for SM\Topochips analysis\result\processed channel 3\'; % processed alb saving directory
-source3 = 'Y:\Dropbox\Hanry Projects\SunM-TopoChip codes generating\Code for SM\Topochips analysis\result\processed channel 5\'; % processed ck19 saving directory
+dir1 = uigetdir('','Choose the folder directory for channel 2 dapi');% directory for channel 2 dapi
+dir2 = uigetdir('','Choose the folder directory for channel 3 alb'); % directory for channel 3 alb
+dir3 = uigetdir('','Choose the folder directory for channel 5 ck19'); % directory for channel 5 ck19
+source1 = uigetdir('','Choose the folder directory for processed dapi saving directory'); % processed dapi saving directory
+source2 = uigetdir('','Choose the folder directory for processed alb saving directory'); % processed alb saving directory
+source3 = uigetdir('','Choose the folder directory for processed ck19 saving directory'); % processed ck19 saving directory
 
 % settings 
 tiffiles1 = dir([sdirectory1 '\*.tif']);% specs for 1
