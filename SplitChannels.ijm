@@ -6,30 +6,37 @@
 //Specify the input folder and output folder name
 input = getDirectory("Choose a folder for the input folder");
 output= getDirectory("Choose a folder for the ouput folder");//
-ch=5;//change from 1 to 5
+ch=1;//change from 1 to 5
 setBatchMode(true);
+imtype = "TIF"; //png, tif, etc
+
 
 File.makeDirectory(output);
 
 //Load the parameters
 list = getFileList(input);
-for (i = 0; i < list.length; i++)
-        action(input, output, list[i]);
-
-
-function action(input, output, filename) {
-        	open(input + filename);
-	index=i+1;
-	selectWindow(filename);
-	run("Duplicate...", "title=[filename] duplicate channels=ch slices=1-24");
+for (i=0; i<list.length; i++){
+    //action(input, output, list[i]);
+    //function action(input, output, filename) {
+    file_name = list[i];
+    print(file_name);
+    //open(input+file_name);
+    open(input + list[i]);
+	//index=i+1;
+	//selectWindow(file_name);
+	run("Stack to Images");
+    run("Duplicate...", " ");
+	//run("Duplicate...", "title=[filename] duplicate channels=ch slices=1-24");
 	// run("Z Project...", "projection=[Max Intensity]");
-	new_name="processed"+index+filename;
-	saveAs("Tiff", output + new_name);
+	//new_name="processed"+index+file_name;
+	saveAs("Tiff", output + file_name);
 	close();
 	close();
 	close();
+	close();
+	print("Split image"+file_name);
 }
-
+    print("Done!");
 
 
 
